@@ -1,0 +1,3 @@
+The origin of these parts is their corresponding rotating axis.
+That is, if you simply plot them in the simulation, they will appear "on the ground." To be honest, I haven't fixed this issue because I'm not sure what the problem is.
+Caused by ply files? DH parameters?...
