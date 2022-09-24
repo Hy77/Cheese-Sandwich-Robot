@@ -22,34 +22,38 @@ classdef czRobot < handle
         %% GetIRBRobot
         % Given a name (optional), create and return a IRB robot model
         function GetIRBRobot(self)
-%             L1 = Link('d',0.087,'a',0,'alpha',pi/2,'qlim',deg2rad([-360 360]), 'offset',0);
-%             L2 = Link('d',0,'a',0,'alpha',0,'qlim', deg2rad([-360 360]), 'offset',0);
-%             L3 = Link('d',0,'a',0,'alpha',0,'qlim', deg2rad([-360 360]), 'offset', 0);
-%             L4 = Link('d',0.11235,'a',0,'alpha',pi/2,'qlim',deg2rad([-360 360]),'offset', 0);
-%             L5 = Link('d',0.08535,'a',0,'alpha',-pi/2,'qlim',deg2rad([-360,360]), 'offset',0);
-%             L6 = Link('d',0.0819,'a',0,'alpha',0,'qlim',deg2rad([-360,360]), 'offset', 0);
-             
-%             self.model = SerialLink([L1 L2],'name','IRB');
-            L(1) = Link([0     0.087       0       pi/2    0]); % base
-            L(2) = Link([0       0         0        0      0]);
-%             L(3) = Link([0      0.152   0       pi/2    0]);
-%             L(4) = Link([0      0     -0.243     0      0]);
-%             L(5) = Link([0      0     -0.213     0      0]);
-%             L(6) = Link([0      0.105   0       pi/2	0]);
-
+%             L1 = Link('d',0.084,'a',0,'alpha',pi/2,'qlim',deg2rad([-360 360]), 'offset',0);
+%             L2 = Link('d',0.1,'a',0,'alpha',0,'qlim', deg2rad([-360 360]), 'offset',0);
+%             L3 = Link('d',0.1,'a',0,'alpha',0,'qlim', deg2rad([-360 360]), 'offset', 0);
+%             L4 = Link('d',0.05,'a',-0.08,'alpha',0,'qlim',deg2rad([-360 360]),'offset', 0);
+%             L5 = Link('d',0,'a',-0.12,'alpha',0,'qlim',deg2rad([-360,360]), 'offset',0);
+%             L6 = Link('d',0.018,'a',-0.065,'alpha',0,'qlim',deg2rad([-360,360]), 'offset', 0);
+%             self.model = SerialLink([L1 L2 L3 L4 L5 L6],'name','IRB');
+            
+            L(1) = Link([0     0.084      0       pi/2   0]); % base
+            L(2) = Link([pi      0       0.1      0      0]);
+           L(3) = Link([0      0       0.1        0      0]);
+            L(4) = Link([0      0.05      -0.08      0      0]);
+            L(5) = Link([0      0       -0.12      0      0]);
+            L(6) = Link([0     0.018    -0.065      0	  0]);
             % Incorporate joint limits
             L(1).qlim = [-360 360]*pi/180;
-             L(2).qlim = [-360 360]*pi/180;
-%             L(4).qlim = [-205 28]*pi/180;
-%             L(5).qlim = [-360 360]*pi/180;
-%             L(6).qlim = [-360 360]*pi/180;
-
-            
+            L(2).qlim = [-360 360]*pi/180;
+           L(3).qlim = [-360 360]*pi/180;
+            L(4).qlim = [-360 360]*pi/180;
+            L(5).qlim = [-360 360]*pi/180;
+            L(6).qlim = [-360 360]*pi/180;  
             self.model = SerialLink(L,'name','IRB');
+            
+%             scale = 0.5;                                                        % Scale the robot down
+%             q = zeros(1,2);                                                     % Generate a vector of joint angles
+%             
+%             self.model.plot(q,'workspace',self.workspace,'scale',scale)
+%             
             self.model_pos = [0,0,0];
             pos = makehgtform('translate',[self.model_pos]);
             self.model.base = self.model.base * pos;
-            self.model.teach
+            %self.model.teach
         end
 
         %% PlotAndColourRobot
