@@ -13,7 +13,7 @@ classdef czRobot < handle
         function self = czRobot(~)
             clf
             self.GetIRBRobot();
-           % self.PlotAndColourRobot();%robot,workspace);
+            self.PlotAndColourRobot();%robot,workspace);
 
             drawnow
         end
@@ -22,33 +22,29 @@ classdef czRobot < handle
         % Given a name (optional), create and return a IRB robot model
         function GetIRBRobot(self)
             
-            L(1) = Link([0     0.085      0       pi/2     0]); % base
-            L(2) = Link([0      0       0.099      0      0]);
-            L(3) = Link([0      0         0       -pi/2    0]);
-            L(4) = Link([0     0.1        0       pi/2     0]);
-            L(5) = Link([0      0         0       -pi/2    0]);
-            L(6) = Link([0     0.05       0         0	   0]);
+            L(1) = Link([0     0.185      0       pi/2     0]); % base
+            L(2) = Link([0      0       0.15       0       0]);
+            L(3) = Link([0      0         0      -pi/2     0]);
+            L(4) = Link([0     -0.193     0       pi/2     0]);
+            L(5) = Link([0      0         0      -pi/2     0]);
+            L(6) = Link([0     -0.064   -0.0183     0	   0]);
             % Incorporate joint limits
             L(1).qlim = [-360 360]*pi/180;
-            L(2).qlim = [-360 360]*pi/180;
-            L(3).qlim = [-360 360]*pi/180;
+            L(2).qlim = [-122 135]*pi/180;
+            L(3).qlim = [-220  50]*pi/180;
             L(4).qlim = [-360 360]*pi/180;
-            L(5).qlim = [-360 360]*pi/180;
+            L(5).qlim = [-135 150]*pi/180;
             L(6).qlim = [-360 360]*pi/180;  
-% 
+            % Offset
             L(2).offset = pi/2;
             L(3).offset = -pi;
             
             self.model = SerialLink(L,'name','IRB');
-            scale = 0.5;                                                    
-            q = zeros(1,6);                                                   
-            self.model.plot(q,'workspace',self.workspace,'scale',scale)
-%             
+    
             self.model_pos = [0,0,0];
             pos = makehgtform('translate',[self.model_pos]);
             self.model.base = self.model.base * pos;
-            
-            self.model.teach
+           
         end
 
         %% PlotAndColourRobot
