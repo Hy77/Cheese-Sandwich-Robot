@@ -51,12 +51,7 @@ classdef czRobot < handle
         % Given a robot index, add the glyphs (vertices and faces) and
         % colour them in if data is available 
         function PlotAndColourRobot(self)%robot,workspace)
-            for linkIndex = 0:self.model.n
-%                 if linkIndex == 0
-%                     [ faceData, vertexData, plyData{linkIndex + 1} ] = plyread(['ur3link_0.ply'],'tri'); %#ok<AGROW> 
-%                 else
-%                     [ faceData, vertexData, plyData{linkIndex + 1} ] = plyread(['IRB_',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>   
-%                 end        
+            for linkIndex = 0:self.model.n  
                 [ faceData, vertexData, plyData{linkIndex + 1} ] = plyread(['IRB_',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW> 
                 self.model.faces{linkIndex + 1} = faceData;
                 self.model.points{linkIndex + 1} = vertexData;
