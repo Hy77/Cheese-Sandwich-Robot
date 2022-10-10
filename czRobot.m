@@ -3,7 +3,9 @@ classdef czRobot < handle
         %> Robot model
         IRB; IRB_pos; UR3; UR3_pos; cp_board; cp_board1; table; table1;
         kitchen; kitchen1; fridge; fridge1; bread1; bread1s; bread2; bread2s;
-        bread3; bread3s; bread4; bread4s; bread5; bread5s;
+        bread3; bread3s; bread4; bread4s; bread5; bread5s; basket; basket1;
+        gp_base; gp_base1; gp_fg1;gp_fg1s; gp_fg2;gp_fg2s; gp_fg3;gp_fg3s;
+        c_block; c_block1; c_slice; c_slice1;
         
         %> workspace
         workspace = [-2 2 -2 2 0 2];   
@@ -23,12 +25,12 @@ classdef czRobot < handle
         %% GetIRBRobot
         function GetIRBRobot(self)
             % DH parameters
-            L_IRB(1) = Link([0     0.225      0       pi/2     0]); % base
+            L_IRB(1) = Link([0     0.248      0       pi/2     0]); % base
             L_IRB(2) = Link([0      0       0.22       0       0]);
             L_IRB(3) = Link([0      0         0      -pi/2     0]);
             L_IRB(4) = Link([0     -0.295     0       pi/2     0]);
             L_IRB(5) = Link([0      0         0      -pi/2     0]);
-            L_IRB(6) = Link([0     -0.097   -0.027     0	   0]);
+            L_IRB(6) = Link([0     -0.059     0        0	   0]);
             % Incorporate joint limits
             L_IRB(1).qlim = [-360 360]*pi/180;
             L_IRB(2).qlim = [-122 135]*pi/180;
@@ -124,6 +126,159 @@ classdef czRobot < handle
             self.table1.Vertices = updatedPoints(:,1:3); % updated the table's location
             hold on
 
+            % colour the gripper_base
+            [fgb,vgb,datagb] = plyread('gripper_base.ply','tri');
+            self.gp_base.VertexCount = size(vgb,1);
+            self.gp_base.midPoint = sum(vgb)/self.gp_base.VertexCount; % find the midPoint of the gp_base
+            self.gp_base.baseVerts = vgb - repmat(self.gp_base.midPoint,self.gp_base.VertexCount,1);  % find the vertex of the gp_base
+            self.gp_base.basePose = eye(4);
+            self.gp_base.vertexColours = [datagb.vertex.red, datagb.vertex.green, datagb.vertex.blue] / 255; % set gp_base's colour
+            self.gp_base1 = trisurf(fgb,vgb(:,1),vgb(:,2),vgb(:,3),'FaceVertexCData', self.gp_base.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the gp_base all the faces & colour
+            forwardTR = makehgtform('translate',[0.033,-0.515,1.085]); % set the origin/start point of the gp_base
+            rotateTRx = makehgtform('xrotate',(-pi/2));
+            self.gp_base.basePose = self.gp_base.basePose * forwardTR * rotateTRx; % let the gp_base move to the specified position
+            updatedPoints = [self.gp_base.basePose * [self.gp_base.baseVerts,ones(self.gp_base.VertexCount,1)]']'; % get the new position
+            self.gp_base1.Vertices = updatedPoints(:,1:3); % updated the gp_base's location
+            hold on
+            
+            % colour the basket
+            [fbck,vgbck,databck] = plyread('basket.ply','tri');
+            self.basket.VertexCount = size(vgbck,1);
+            self.basket.midPoint = sum(vgbck)/self.basket.VertexCount; % find the midPoint of the basket
+            self.basket.baseVerts = vgbck - repmat(self.basket.midPoint,self.basket.VertexCount,1);  % find the vertex of the basket
+            self.basket.basePose = eye(4);
+            self.basket.vertexColours = [databck.vertex.red, databck.vertex.green, databck.vertex.blue] / 255; % set basket's colour
+            self.basket1 = trisurf(fbck,vgbck(:,1),vgbck(:,2),vgbck(:,3),'FaceVertexCData', self.basket.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the basket all the faces & colour
+            forwardTR = makehgtform('translate',[0.27,-0.6,0.82]); % set the origin/start point of the basket
+            rotateTRz = makehgtform('zrotate',(pi/2));
+            self.basket.basePose = self.basket.basePose * forwardTR * rotateTRz; % let the basket move to the specified position
+            updatedPoints = [self.basket.basePose * [self.basket.baseVerts,ones(self.basket.VertexCount,1)]']'; % get the new position
+            self.basket1.Vertices = updatedPoints(:,1:3); % updated the basket's location
+            hold on
+            
+            % colour the gripper_fingers
+            [fgf,vgf,datagf] = plyread('gripper_finger.ply','tri');
+            % colour the gripper_finger1
+            self.gp_fg1.VertexCount = size(vgf,1);
+            self.gp_fg1.midPoint = sum(vgf)/self.gp_fg1.VertexCount; % find the midPoint of the gp_fg1
+            self.gp_fg1.baseVerts = vgf - repmat(self.gp_fg1.midPoint,self.gp_fg1.VertexCount,1);  % find the vertex of the gp_fg1
+            self.gp_fg1.basePose = eye(4);
+            self.gp_fg1.vertexColours = [datagf.vertex.red, datagf.vertex.green, datagf.vertex.blue] / 255; % set gp_fg1's colour
+            self.gp_fg1s = trisurf(fgf,vgf(:,1),vgf(:,2),vgf(:,3),'FaceVertexCData', self.gp_fg1.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the gp_fg1 all the faces & colour
+            forwardTR = makehgtform('translate',[0.033,-0.5,1.11]); % set the origin/start point of the gp_fg1
+            self.gp_fg1.basePose = self.gp_fg1.basePose * forwardTR; % let the gp_fg1 move to the specified position
+            updatedPoints = [self.gp_fg1.basePose * [self.gp_fg1.baseVerts,ones(self.gp_fg1.VertexCount,1)]']'; % get the new position
+            self.gp_fg1s.Vertices = updatedPoints(:,1:3); % updated the gp_fg1's location
+            hold on
+            % colour the gripper_finger2
+            self.gp_fg2.VertexCount = size(vgf,1);
+            self.gp_fg2.midPoint = sum(vgf)/self.gp_fg2.VertexCount; % find the midPoint of the gp_fg2
+            self.gp_fg2.baseVerts = vgf - repmat(self.gp_fg2.midPoint,self.gp_fg2.VertexCount,1);  % find the vertex of the gp_fg2
+            self.gp_fg2.basePose = eye(4);
+            self.gp_fg2.vertexColours = [datagf.vertex.red, datagf.vertex.green, datagf.vertex.blue] / 255; % set gp_fg2's colour
+            self.gp_fg2s = trisurf(fgf,vgf(:,1),vgf(:,2),vgf(:,3),'FaceVertexCData', self.gp_fg2.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the gp_fg2 all the faces & colour
+            forwardTR = makehgtform('translate',[0.054,-0.5,1.07]); % set the origin/start point of the gp_fg2
+            rotateTRy = makehgtform('yrotate',(2*pi/3));
+            self.gp_fg2.basePose = self.gp_fg2.basePose * forwardTR * rotateTRy; % let the gp_fg2 move to the specified position
+            updatedPoints = [self.gp_fg2.basePose * [self.gp_fg2.baseVerts,ones(self.gp_fg2.VertexCount,1)]']'; % get the new position
+            self.gp_fg2s.Vertices = updatedPoints(:,1:3); % updated the gp_fg2's location
+            hold on
+            % colour the gripper_finger3
+            self.gp_fg3.VertexCount = size(vgf,1);
+            self.gp_fg3.midPoint = sum(vgf)/self.gp_fg3.VertexCount; % find the midPoint of the gp_fg3
+            self.gp_fg3.baseVerts = vgf - repmat(self.gp_fg3.midPoint,self.gp_fg3.VertexCount,1);  % find the vertex of the gp_fg3
+            self.gp_fg3.basePose = eye(4);
+            self.gp_fg3.vertexColours = [datagf.vertex.red, datagf.vertex.green, datagf.vertex.blue] / 255; % set gp_fg3's colour
+            self.gp_fg3s = trisurf(fgf,vgf(:,1),vgf(:,2),vgf(:,3),'FaceVertexCData', self.gp_fg3.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the gp_fg3 all the faces & colour
+            forwardTR = makehgtform('translate',[0.011,-0.5,1.07]); % set the origin/start point of the gp_fg3
+            rotateTRy = makehgtform('yrotate',(-2*pi/3));
+            self.gp_fg3.basePose = self.gp_fg3.basePose * forwardTR * rotateTRy; % let the gp_fg3 move to the specified position
+            updatedPoints = [self.gp_fg3.basePose * [self.gp_fg3.baseVerts,ones(self.gp_fg3.VertexCount,1)]']'; % get the new position
+            self.gp_fg3s.Vertices = updatedPoints(:,1:3); % updated the gp_fg3's location
+            hold on
+            
+            % colour the breads
+            [fb,vb,datab] = plyread('bread.ply','tri');
+            % colour the bread1
+            self.bread1.VertexCount = size(vb,1);
+            self.bread1.midPoint = sum(vb)/self.bread1.VertexCount; % find the midPoint of the bread1
+            self.bread1.baseVerts = vb - repmat(self.bread1.midPoint,self.bread1.VertexCount,1);  % find the vertex of the bread1
+            self.bread1.basePose = eye(4);
+            self.bread1.vertexColours = [datab.vertex.red, datab.vertex.green, datab.vertex.blue] / 255; % set bread1's colour
+            self.bread1s = trisurf(fb,vb(:,1),vb(:,2),vb(:,3),'FaceVertexCData', self.bread1.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the bread1 all the faces & colour
+            forwardTR = makehgtform('translate',[0.1850,-0.53,0.87]); % set the origin/start point of the bread1
+            rotateTRy = makehgtform('yrotate',(-pi/2));
+            self.bread1.basePose = self.bread1.basePose * forwardTR * rotateTRy; % let the bread1 move to the specified position
+            updatedPoints = [self.bread1.basePose * [self.bread1.baseVerts,ones(self.bread1.VertexCount,1)]']'; % get the new position
+            self.bread1s.Vertices = updatedPoints(:,1:3); % updated the bread1's location
+            hold on
+            % colour the bread2
+            self.bread2.VertexCount = size(vb,1);
+            self.bread2.midPoint = sum(vb)/self.bread2.VertexCount; % find the midPoint of the bread2
+            self.bread2.baseVerts = vb - repmat(self.bread2.midPoint,self.bread2.VertexCount,1);  % find the vertex of the bread2
+            self.bread2.basePose = eye(4);
+            self.bread2.vertexColours = [datab.vertex.red, datab.vertex.green, datab.vertex.blue] / 255; % set bread2's colour
+            self.bread2s = trisurf(fb,vb(:,1),vb(:,2),vb(:,3),'FaceVertexCData', self.bread2.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the bread2 all the faces & colour
+            forwardTR = makehgtform('translate',[0.2075,-0.53,0.87]); % set the origin/start point of the bread2
+            rotateTRy = makehgtform('yrotate',(-pi/2));
+            self.bread2.basePose = self.bread2.basePose * forwardTR * rotateTRy; % let the bread2 move to the specified position
+            updatedPoints = [self.bread2.basePose * [self.bread2.baseVerts,ones(self.bread2.VertexCount,1)]']'; % get the new position
+            self.bread2s.Vertices = updatedPoints(:,1:3); % updated the bread2's location
+            hold on
+            % colour the bread3
+            self.bread3.VertexCount = size(vb,1);
+            self.bread3.midPoint = sum(vb)/self.bread3.VertexCount; % find the midPoint of the bread3
+            self.bread3.baseVerts = vb - repmat(self.bread3.midPoint,self.bread3.VertexCount,1);  % find the vertex of the bread3
+            self.bread3.basePose = eye(4);
+            self.bread3.vertexColours = [datab.vertex.red, datab.vertex.green, datab.vertex.blue] / 255; % set bread3's colour
+            self.bread3s = trisurf(fb,vb(:,1),vb(:,2),vb(:,3),'FaceVertexCData', self.bread3.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the bread3 all the faces & colour
+            forwardTR = makehgtform('translate',[0.23,-0.53,0.87]); % set the origin/start point of the bread3
+            rotateTRy = makehgtform('yrotate',(-pi/2));
+            self.bread3.basePose = self.bread3.basePose * forwardTR * rotateTRy; % let the bread3 move to the specified position
+            updatedPoints = [self.bread3.basePose * [self.bread3.baseVerts,ones(self.bread3.VertexCount,1)]']'; % get the new position
+            self.bread3s.Vertices = updatedPoints(:,1:3); % updated the bread3's location
+            hold on
+            % colour the bread4
+            self.bread4.VertexCount = size(vb,1);
+            self.bread4.midPoint = sum(vb)/self.bread4.VertexCount; % find the midPoint of the bread4
+            self.bread4.baseVerts = vb - repmat(self.bread4.midPoint,self.bread4.VertexCount,1);  % find the vertex of the bread4
+            self.bread4.basePose = eye(4);
+            self.bread4.vertexColours = [datab.vertex.red, datab.vertex.green, datab.vertex.blue] / 255; % set bread4's colour
+            self.bread4s = trisurf(fb,vb(:,1),vb(:,2),vb(:,3),'FaceVertexCData', self.bread4.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the bread4 all the faces & colour
+            forwardTR = makehgtform('translate',[0.2525,-0.53,0.87]); % set the origin/start point of the bread4
+            rotateTRy = makehgtform('yrotate',(-pi/2));
+            self.bread4.basePose = self.bread4.basePose * forwardTR * rotateTRy; % let the bread4 move to the specified position
+            updatedPoints = [self.bread4.basePose * [self.bread4.baseVerts,ones(self.bread4.VertexCount,1)]']'; % get the new position
+            self.bread4s.Vertices = updatedPoints(:,1:3); % updated the bread4's location
+            hold on
+            % colour the bread5
+            self.bread5.VertexCount = size(vb,1);
+            self.bread5.midPoint = sum(vb)/self.bread5.VertexCount; % find the midPoint of the bread5
+            self.bread5.baseVerts = vb - repmat(self.bread5.midPoint,self.bread5.VertexCount,1);  % find the vertex of the bread5
+            self.bread5.basePose = eye(4);
+            self.bread5.vertexColours = [datab.vertex.red, datab.vertex.green, datab.vertex.blue] / 255; % set bread5's colour
+            self.bread5s = trisurf(fb,vb(:,1),vb(:,2),vb(:,3),'FaceVertexCData', self.bread5.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the bread5 all the faces & colour
+            forwardTR = makehgtform('translate',[0.275,-0.53,0.87]); % set the origin/start point of the bread5
+            rotateTRy = makehgtform('yrotate',(-pi/2));
+            self.bread5.basePose = self.bread5.basePose * forwardTR * rotateTRy; % let the bread5 move to the specified position
+            updatedPoints = [self.bread5.basePose * [self.bread5.baseVerts,ones(self.bread5.VertexCount,1)]']'; % get the new position
+            self.bread5s.Vertices = updatedPoints(:,1:3); % updated the bread5's location
+            hold on
+            
+             % colour the c_block
+            [fcb,vcb,datacb] = plyread('cheese_block.ply','tri');
+            self.c_block.VertexCount = size(vcb,1);
+            self.c_block.midPoint = sum(vcb)/self.c_block.VertexCount; % find the midPoint of the c_block
+            self.c_block.baseVerts = vcb - repmat(self.c_block.midPoint,self.c_block.VertexCount,1);  % find the vertex of the c_block
+            self.c_block.basePose = eye(4);
+            self.c_block.vertexColours = [datacb.vertex.red, datacb.vertex.green, datacb.vertex.blue] / 255; % set c_block's colour
+            self.c_block1 = trisurf(fcb,vcb(:,1),vcb(:,2),vcb(:,3),'FaceVertexCData', self.c_block.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the c_block all the faces & colour
+            forwardTR = makehgtform('translate',[0.275,-0.685,0.87]); % set the origin/start point of the c_block
+            self.c_block.basePose = self.c_block.basePose * forwardTR; % let the c_block move to the specified position
+            updatedPoints = [self.c_block.basePose * [self.c_block.baseVerts,ones(self.c_block.VertexCount,1)]']'; % get the new position
+            self.c_block1.Vertices = updatedPoints(:,1:3); % updated the c_block's location
+            hold on
+            
             % colour the kitchen
             [fk,vk,datak] = plyread('kitchen.ply','tri');
             self.kitchen.VertexCount = size(vk,1);
@@ -155,74 +310,7 @@ classdef czRobot < handle
             updatedPoints = [self.fridge.basePose * [self.fridge.baseVerts,ones(self.fridge.VertexCount,1)]']'; % get the new position
             self.fridge1.Vertices = updatedPoints(:,1:3); % updated the fridge's location
             hold on
-           
-            % colour the breads
-            [fb,vb,datab] = plyread('bread.ply','tri');
-            % colour the bread1
-            self.bread1.VertexCount = size(vb,1);
-            self.bread1.midPoint = sum(vb)/self.bread1.VertexCount; % find the midPoint of the bread1
-            self.bread1.baseVerts = vb - repmat(self.bread1.midPoint,self.bread1.VertexCount,1);  % find the vertex of the bread1
-            self.bread1.basePose = eye(4);
-            self.bread1.vertexColours = [datab.vertex.red, datab.vertex.green, datab.vertex.blue] / 255; % set bread1's colour
-            self.bread1s = trisurf(fb,vb(:,1),vb(:,2),vb(:,3),'FaceVertexCData', self.bread1.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the bread1 all the faces & colour
-            forwardTR = makehgtform('translate',[0.2525,-0.6,0.85]); % set the origin/start point of the bread1
-            rotateTRy = makehgtform('yrotate',(-pi/2));
-            self.bread1.basePose = self.bread1.basePose * forwardTR * rotateTRy; % let the bread1 move to the specified position
-            updatedPoints = [self.bread1.basePose * [self.bread1.baseVerts,ones(self.bread1.VertexCount,1)]']'; % get the new position
-            self.bread1s.Vertices = updatedPoints(:,1:3); % updated the bread1's location
-            hold on
-            % colour the bread2
-            self.bread2.VertexCount = size(vb,1);
-            self.bread2.midPoint = sum(vb)/self.bread2.VertexCount; % find the midPoint of the bread2
-            self.bread2.baseVerts = vb - repmat(self.bread2.midPoint,self.bread2.VertexCount,1);  % find the vertex of the bread2
-            self.bread2.basePose = eye(4);
-            self.bread2.vertexColours = [datab.vertex.red, datab.vertex.green, datab.vertex.blue] / 255; % set bread2's colour
-            self.bread2s = trisurf(fb,vb(:,1),vb(:,2),vb(:,3),'FaceVertexCData', self.bread2.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the bread2 all the faces & colour
-            forwardTR = makehgtform('translate',[0.275,-0.6,0.85]); % set the origin/start point of the bread2
-            rotateTRy = makehgtform('yrotate',(-pi/2));
-            self.bread2.basePose = self.bread2.basePose * forwardTR * rotateTRy; % let the bread2 move to the specified position
-            updatedPoints = [self.bread2.basePose * [self.bread2.baseVerts,ones(self.bread2.VertexCount,1)]']'; % get the new position
-            self.bread2s.Vertices = updatedPoints(:,1:3); % updated the bread2's location
-            hold on
-            % colour the bread3
-            self.bread3.VertexCount = size(vb,1);
-            self.bread3.midPoint = sum(vb)/self.bread3.VertexCount; % find the midPoint of the bread3
-            self.bread3.baseVerts = vb - repmat(self.bread3.midPoint,self.bread3.VertexCount,1);  % find the vertex of the bread3
-            self.bread3.basePose = eye(4);
-            self.bread3.vertexColours = [datab.vertex.red, datab.vertex.green, datab.vertex.blue] / 255; % set bread3's colour
-            self.bread3s = trisurf(fb,vb(:,1),vb(:,2),vb(:,3),'FaceVertexCData', self.bread3.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the bread3 all the faces & colour
-            forwardTR = makehgtform('translate',[0.2975,-0.6,0.85]); % set the origin/start point of the bread3
-            rotateTRy = makehgtform('yrotate',(-pi/2));
-            self.bread3.basePose = self.bread3.basePose * forwardTR * rotateTRy; % let the bread3 move to the specified position
-            updatedPoints = [self.bread3.basePose * [self.bread3.baseVerts,ones(self.bread3.VertexCount,1)]']'; % get the new position
-            self.bread3s.Vertices = updatedPoints(:,1:3); % updated the bread3's location
-            hold on
-            % colour the bread4
-            self.bread4.VertexCount = size(vb,1);
-            self.bread4.midPoint = sum(vb)/self.bread4.VertexCount; % find the midPoint of the bread4
-            self.bread4.baseVerts = vb - repmat(self.bread4.midPoint,self.bread4.VertexCount,1);  % find the vertex of the bread4
-            self.bread4.basePose = eye(4);
-            self.bread4.vertexColours = [datab.vertex.red, datab.vertex.green, datab.vertex.blue] / 255; % set bread4's colour
-            self.bread4s = trisurf(fb,vb(:,1),vb(:,2),vb(:,3),'FaceVertexCData', self.bread4.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the bread4 all the faces & colour
-            forwardTR = makehgtform('translate',[0.32,-0.6,0.85]); % set the origin/start point of the bread4
-            rotateTRy = makehgtform('yrotate',(-pi/2));
-            self.bread4.basePose = self.bread4.basePose * forwardTR * rotateTRy; % let the bread4 move to the specified position
-            updatedPoints = [self.bread4.basePose * [self.bread4.baseVerts,ones(self.bread4.VertexCount,1)]']'; % get the new position
-            self.bread4s.Vertices = updatedPoints(:,1:3); % updated the bread4's location
-            hold on
-            % colour the bread5
-            self.bread5.VertexCount = size(vb,1);
-            self.bread5.midPoint = sum(vb)/self.bread5.VertexCount; % find the midPoint of the bread5
-            self.bread5.baseVerts = vb - repmat(self.bread5.midPoint,self.bread5.VertexCount,1);  % find the vertex of the bread5
-            self.bread5.basePose = eye(4);
-            self.bread5.vertexColours = [datab.vertex.red, datab.vertex.green, datab.vertex.blue] / 255; % set bread5's colour
-            self.bread5s = trisurf(fb,vb(:,1),vb(:,2),vb(:,3),'FaceVertexCData', self.bread5.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the bread5 all the faces & colour
-            forwardTR = makehgtform('translate',[0.3425,-0.6,0.85]); % set the origin/start point of the bread5
-            rotateTRy = makehgtform('yrotate',(-pi/2));
-            self.bread5.basePose = self.bread5.basePose * forwardTR * rotateTRy; % let the bread5 move to the specified position
-            updatedPoints = [self.bread5.basePose * [self.bread5.baseVerts,ones(self.bread5.VertexCount,1)]']'; % get the new position
-            self.bread5s.Vertices = updatedPoints(:,1:3); % updated the bread5's location
-            hold on
+            
             
             % Display IRB robot
             self.IRB.plot3d(zeros(1,self.IRB.n),'noarrow','workspace',self.workspace);
