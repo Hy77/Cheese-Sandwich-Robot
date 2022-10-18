@@ -5,15 +5,15 @@ classdef czRobot < handle
         kitchen; kitchen1; fridge; fridge1; bread1; bread1s; bread2; bread2s;
         bread3; bread3s; bread4; bread4s; bread5; bread5s; basket; basket1;
         gp_base; gp_base1; gp_fg1;gp_fg1s; gp_fg2;gp_fg2s; gp_fg3;gp_fg3s;
-        c_block; c_block1; c_slice; c_slice1;
+        c_block; c_block1; c_blocks; c_block2; c_slice; c_slice1;
         
         %> workspace
-        workspace = [-2 2 -2 2 0 2];   
-      
+        workspace = [-2 2 -2 2 0 2];
+        
     end
     
     methods%% Class for kitchen robot simulation
-
+        
         function self = czRobot(~)
             clf
             self.GetIRBRobot();
@@ -21,7 +21,7 @@ classdef czRobot < handle
             self.PlotAndColourRobot();
             drawnow
         end
-
+        
         %% GetIRBRobot
         function GetIRBRobot(self)
             % DH parameters
@@ -34,10 +34,10 @@ classdef czRobot < handle
             % Incorporate joint limits
             L_IRB(1).qlim = [-360 360]*pi/180;
             L_IRB(2).qlim = [-122 135]*pi/180;
-            L_IRB(3).qlim = [-220  50]*pi/180;
+            L_IRB(3).qlim = [-40  235]*pi/180;
             L_IRB(4).qlim = [-360 360]*pi/180;
             L_IRB(5).qlim = [-135 150]*pi/180;
-            L_IRB(6).qlim = [-360 360]*pi/180;  
+            L_IRB(6).qlim = [-360 360]*pi/180;
             % Offset
             L_IRB(2).offset = pi/2;
             L_IRB(4).offset = pi;
@@ -49,7 +49,7 @@ classdef czRobot < handle
             self.IRB.base = self.IRB.base * pos;
         end
         
-       %% GetUR3Robot
+        %% GetUR3Robot
         function GetUR3Robot(self)
             
             % DH parameters
@@ -58,11 +58,11 @@ classdef czRobot < handle
             L_UR3(3) = Link([0      0       -0.21325       0       0]);
             L_UR3(4) = Link([0      0.11235     0        pi/2      0]);
             L_UR3(5) = Link([0      0.08535     0       -pi/2	   0]);
-            L_UR3(6) = Link([0      0.0819      0          0       0]);
+            L_UR3(6) = Link([0      0.092      0          0       0]);
             % Incorporate joint limits
             L_UR3(1).qlim = [-360 360]*pi/180;
             L_UR3(2).qlim = [-360 360]*pi/180;
-            L_UR3(3).qlim = [-205 28]*pi/180;
+            L_UR3(3).qlim = [-205 100]*pi/180;
             L_UR3(4).qlim = [-360 360]*pi/180;
             L_UR3(5).qlim = [-360 360]*pi/180;
             L_UR3(6).qlim = [-360 360]*pi/180;
@@ -72,29 +72,28 @@ classdef czRobot < handle
             L_UR3(4).offset = -pi;
             L_UR3(5).offset = pi;
             
-            self.UR3 = SerialLink(L_UR3,'name','UR3');       
+            self.UR3 = SerialLink(L_UR3,'name','UR3');
             self.UR3_pos = [-0.18,-0.5,0.775]; % set robot base's position
             pos = makehgtform('translate',[self.UR3_pos]); % Rotate/Move robot to the correct orientation
             self.UR3.base = self.UR3.base * pos;
         end
-        
         %% PlotAndColourRobot
         % Given a robot index, add the glyphs (vertices and faces) and
-        % colour them in if data is available 
+        % colour them in if data is available
         function PlotAndColourRobot(self)%robot,workspace)
             % colour the IRB robot
-            for linkIndex = 0:self.IRB.n  
-                [ faceData, vertexData, plyData1{linkIndex + 1} ] = plyread(['IRB_',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>   
+            for linkIndex = 0:self.IRB.n
+                [ faceData, vertexData, plyData1{linkIndex + 1} ] = plyread(['IRB_',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>
                 self.IRB.faces{linkIndex + 1} = faceData;
                 self.IRB.points{linkIndex + 1} = vertexData;
             end
-             
+            % colour the UR3 robot
             for linkIndex = 0:self.UR3.n
-                [ faceData, vertexData, plyData2{linkIndex + 1} ] = plyread(['ur3link_',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>      
+                [ faceData, vertexData, plyData2{linkIndex + 1} ] = plyread(['ur3link_',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>
                 self.UR3.faces{linkIndex + 1} = faceData;
                 self.UR3.points{linkIndex + 1} = vertexData;
             end
-    
+            
             % colour the chopping board
             [f,v,data] = plyread('Chopping_board.ply','tri');
             self.cp_board.VertexCount = size(v,1);
@@ -125,21 +124,6 @@ classdef czRobot < handle
             updatedPoints = [self.table.basePose * [self.table.baseVerts,ones(self.table.VertexCount,1)]']'; % get the new position
             self.table1.Vertices = updatedPoints(:,1:3); % updated the table's location
             hold on
-
-            % colour the gripper_base
-            [fgb,vgb,datagb] = plyread('gripper_base.ply','tri');
-            self.gp_base.VertexCount = size(vgb,1);
-            self.gp_base.midPoint = sum(vgb)/self.gp_base.VertexCount; % find the midPoint of the gp_base
-            self.gp_base.baseVerts = vgb - repmat(self.gp_base.midPoint,self.gp_base.VertexCount,1);  % find the vertex of the gp_base
-            self.gp_base.basePose = eye(4);
-            self.gp_base.vertexColours = [datagb.vertex.red, datagb.vertex.green, datagb.vertex.blue] / 255; % set gp_base's colour
-            self.gp_base1 = trisurf(fgb,vgb(:,1),vgb(:,2),vgb(:,3),'FaceVertexCData', self.gp_base.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the gp_base all the faces & colour
-            forwardTR = makehgtform('translate',[0.033,-0.515,1.085]); % set the origin/start point of the gp_base
-            rotateTRx = makehgtform('xrotate',(-pi/2));
-            self.gp_base.basePose = self.gp_base.basePose * forwardTR * rotateTRx; % let the gp_base move to the specified position
-            updatedPoints = [self.gp_base.basePose * [self.gp_base.baseVerts,ones(self.gp_base.VertexCount,1)]']'; % get the new position
-            self.gp_base1.Vertices = updatedPoints(:,1:3); % updated the gp_base's location
-            hold on
             
             % colour the basket
             [fbck,vgbck,databck] = plyread('basket.ply','tri');
@@ -156,16 +140,32 @@ classdef czRobot < handle
             self.basket1.Vertices = updatedPoints(:,1:3); % updated the basket's location
             hold on
             
+            % colour the gripper_base
+            [fgb,vgb,datagb] = plyread('gripper_base.ply','tri');
+            self.gp_base.VertexCount = size(vgb,1);
+            self.gp_base.midPoint = sum(vgb)/self.gp_base.VertexCount; % find the midPoint of the gp_base
+            self.gp_base.baseVerts = vgb - repmat(self.gp_base.midPoint,self.gp_base.VertexCount,1);  % find the vertex of the gp_base
+            self.gp_base.basePose = eye(4);
+            self.gp_base.vertexColours = [datagb.vertex.red, datagb.vertex.green, datagb.vertex.blue] / 255; % set gp_base's colour
+            self.gp_base1 = trisurf(fgb,vgb(:,1),vgb(:,2),vgb(:,3),'FaceVertexCData', self.gp_base.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the gp_base all the faces & colour
+            forwardTR = makehgtform('translate',[0.033,-0.5203,1.085]); % set the origin/start point of the gp_base
+            rotateTRx = makehgtform('xrotate',(-pi/2));
+            self.gp_base.basePose = self.gp_base.basePose * forwardTR * rotateTRx; % let the gp_base move to the specified position
+            updatedPoints = [self.gp_base.basePose * [self.gp_base.baseVerts,ones(self.gp_base.VertexCount,1)]']'; % get the new position
+            self.gp_base1.Vertices = updatedPoints(:,1:3); % updated the gp_base's location
+            hold on
+            
             % colour the gripper_fingers
-            [fgf,vgf,datagf] = plyread('gripper_finger.ply','tri');
+            [fgf,vgf,datagf] = plyread('gripper_finger_v2.ply','tri');
             % colour the gripper_finger1
             self.gp_fg1.VertexCount = size(vgf,1);
             self.gp_fg1.midPoint = sum(vgf)/self.gp_fg1.VertexCount; % find the midPoint of the gp_fg1
             self.gp_fg1.baseVerts = vgf - repmat(self.gp_fg1.midPoint,self.gp_fg1.VertexCount,1);  % find the vertex of the gp_fg1
             self.gp_fg1.basePose = eye(4);
             self.gp_fg1.vertexColours = [datagf.vertex.red, datagf.vertex.green, datagf.vertex.blue] / 255; % set gp_fg1's colour
+            %self.gp_fg1s = trisurf(fgf,vgf(:,1),vgf(:,2),vgf(:,3),'EdgeColor','interp','EdgeLighting','flat'); % plot the gp_fg1 all the faces & colour
             self.gp_fg1s = trisurf(fgf,vgf(:,1),vgf(:,2),vgf(:,3),'FaceVertexCData', self.gp_fg1.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the gp_fg1 all the faces & colour
-            forwardTR = makehgtform('translate',[0.033,-0.5,1.11]); % set the origin/start point of the gp_fg1
+            forwardTR = makehgtform('translate',[0.033,-0.5203,1.085]); % set the origin/start point of the gp_fg1 0.033,-0.5,1.11
             self.gp_fg1.basePose = self.gp_fg1.basePose * forwardTR; % let the gp_fg1 move to the specified position
             updatedPoints = [self.gp_fg1.basePose * [self.gp_fg1.baseVerts,ones(self.gp_fg1.VertexCount,1)]']'; % get the new position
             self.gp_fg1s.Vertices = updatedPoints(:,1:3); % updated the gp_fg1's location
@@ -177,7 +177,7 @@ classdef czRobot < handle
             self.gp_fg2.basePose = eye(4);
             self.gp_fg2.vertexColours = [datagf.vertex.red, datagf.vertex.green, datagf.vertex.blue] / 255; % set gp_fg2's colour
             self.gp_fg2s = trisurf(fgf,vgf(:,1),vgf(:,2),vgf(:,3),'FaceVertexCData', self.gp_fg2.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the gp_fg2 all the faces & colour
-            forwardTR = makehgtform('translate',[0.054,-0.5,1.07]); % set the origin/start point of the gp_fg2
+            forwardTR = makehgtform('translate',[0.033,-0.5203,1.085]); % set the origin/start point of the gp_fg2 0.054,-0.5,1.07
             rotateTRy = makehgtform('yrotate',(2*pi/3));
             self.gp_fg2.basePose = self.gp_fg2.basePose * forwardTR * rotateTRy; % let the gp_fg2 move to the specified position
             updatedPoints = [self.gp_fg2.basePose * [self.gp_fg2.baseVerts,ones(self.gp_fg2.VertexCount,1)]']'; % get the new position
@@ -190,7 +190,7 @@ classdef czRobot < handle
             self.gp_fg3.basePose = eye(4);
             self.gp_fg3.vertexColours = [datagf.vertex.red, datagf.vertex.green, datagf.vertex.blue] / 255; % set gp_fg3's colour
             self.gp_fg3s = trisurf(fgf,vgf(:,1),vgf(:,2),vgf(:,3),'FaceVertexCData', self.gp_fg3.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the gp_fg3 all the faces & colour
-            forwardTR = makehgtform('translate',[0.011,-0.5,1.07]); % set the origin/start point of the gp_fg3
+            forwardTR = makehgtform('translate',[0.033,-0.5203,1.085]); % set the origin/start point of the gp_fg3 0.011,-0.5,1.07
             rotateTRy = makehgtform('yrotate',(-2*pi/3));
             self.gp_fg3.basePose = self.gp_fg3.basePose * forwardTR * rotateTRy; % let the gp_fg3 move to the specified position
             updatedPoints = [self.gp_fg3.basePose * [self.gp_fg3.baseVerts,ones(self.gp_fg3.VertexCount,1)]']'; % get the new position
@@ -265,7 +265,7 @@ classdef czRobot < handle
             self.bread5s.Vertices = updatedPoints(:,1:3); % updated the bread5's location
             hold on
             
-             % colour the c_block
+            % colour the c_block
             [fcb,vcb,datacb] = plyread('cheese_block.ply','tri');
             self.c_block.VertexCount = size(vcb,1);
             self.c_block.midPoint = sum(vcb)/self.c_block.VertexCount; % find the midPoint of the c_block
@@ -278,6 +278,35 @@ classdef czRobot < handle
             updatedPoints = [self.c_block.basePose * [self.c_block.baseVerts,ones(self.c_block.VertexCount,1)]']'; % get the new position
             self.c_block1.Vertices = updatedPoints(:,1:3); % updated the c_block's location
             hold on
+            
+            % colour the c_block2
+            [fcb,vcb,datacb] = plyread('cheese_block2.ply','tri');
+            self.c_blocks.VertexCount = size(vcb,1);
+            self.c_blocks.midPoint = sum(vcb)/self.c_blocks.VertexCount; % find the midPoint of the c_blocks
+            self.c_blocks.baseVerts = vcb - repmat(self.c_blocks.midPoint,self.c_blocks.VertexCount,1);  % find the vertex of the c_blocks
+            self.c_blocks.basePose = eye(4);
+            self.c_blocks.vertexColours = [datacb.vertex.red, datacb.vertex.green, datacb.vertex.blue] / 255; % set c_blocks's colour
+            self.c_block2 = trisurf(fcb,vcb(:,1),vcb(:,2),vcb(:,3),'FaceVertexCData', self.c_blocks.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the c_blocks all the faces & colour
+            forwardTR = makehgtform('translate',[0,0,0.5]); % set the origin/start point of the c_blocks
+            self.c_blocks.basePose = self.c_blocks.basePose * forwardTR; % let the c_blocks move to the specified position
+            updatedPoints = [self.c_blocks.basePose * [self.c_blocks.baseVerts,ones(self.c_blocks.VertexCount,1)]']'; % get the new position
+            self.c_block2.Vertices = updatedPoints(:,1:3); % updated the c_blocks's location
+            hold on
+            
+            % colour the c_slice
+            [fcb,vcb,datacb] = plyread('cheese_slice.ply','tri');
+            self.c_slice.VertexCount = size(vcb,1);
+            self.c_slice.midPoint = sum(vcb)/self.c_slice.VertexCount; % find the midPoint of the c_slice
+            self.c_slice.baseVerts = vcb - repmat(self.c_slice.midPoint,self.c_slice.VertexCount,1);  % find the vertex of the c_slice
+            self.c_slice.basePose = eye(4);
+            self.c_slice.vertexColours = [datacb.vertex.red, datacb.vertex.green, datacb.vertex.blue] / 255; % set c_slice's colour
+            self.c_slice1 = trisurf(fcb,vcb(:,1),vcb(:,2),vcb(:,3),'FaceVertexCData', self.c_slice.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the c_slice all the faces & colour
+            forwardTR = makehgtform('translate',[0.08,0,0.5]); % set the origin/start point of the c_slice
+            self.c_slice.basePose = self.c_slice.basePose * forwardTR; % let the c_slice move to the specified position
+            updatedPoints = [self.c_slice.basePose * [self.c_slice.baseVerts,ones(self.c_slice.VertexCount,1)]']'; % get the new position
+            self.c_slice1.Vertices = updatedPoints(:,1:3); % updated the c_slice's location
+            hold on
+            
             
             % colour the kitchen
             [fk,vk,datak] = plyread('kitchen.ply','tri');
@@ -314,50 +343,51 @@ classdef czRobot < handle
             
             % Display IRB robot
             self.IRB.plot3d(zeros(1,self.IRB.n),'noarrow','workspace',self.workspace);
-            if isempty(findobj(get(gca,'Children'),'Type','Light')) 
+            if isempty(findobj(get(gca,'Children'),'Type','Light'))
                 camlight
-            end  
+            end
             self.IRB.delay = 0;
-
+            
             % Display UR3 robot
             self.UR3.plot3d(zeros(1,self.UR3.n),'noarrow','workspace',self.workspace);
             if isempty(findobj(get(gca,'Children'),'Type','Light'))
                 camlight
-            end  
+            end
             self.UR3.delay = 0;
             
             % Try to correctly colour the IRB arm (if colours are in ply file data)
             for linkIndex = 0:self.IRB.n
                 handle_IRB = findobj('Tag', self.IRB.name);
                 h_IRB = get(handle_IRB,'UserData');
-                try 
+                try
                     h_IRB.link(linkIndex+1).Children.FaceVertexCData = [plyData1{linkIndex+1}.vertex.red ...
-                                                                  , plyData1{linkIndex+1}.vertex.green ...
-                                                                  , plyData1{linkIndex+1}.vertex.blue]/255;
+                        , plyData1{linkIndex+1}.vertex.green ...
+                        , plyData1{linkIndex+1}.vertex.blue]/255;
                     h_IRB.link(linkIndex+1).Children.FaceColor = 'interp';
                 catch ME_1
                     disp(ME_1);
                     continue;
                 end
             end
-
+            
             % Try to correctly colour the UR3 arm (if colours are in ply file data)
             for linkIndex = 0:self.UR3.n
                 handle_UR3 = findobj('Tag', self.UR3.name);
                 h_UR3 = get(handle_UR3,'UserData');
-                try 
+                try
                     h_UR3.link(linkIndex+1).Children.FaceVertexCData = [plyData2{linkIndex+1}.vertex.red ...
-                                                                  , plyData2{linkIndex+1}.vertex.green ...
-                                                                  , plyData2{linkIndex+1}.vertex.blue]/255;
+                        , plyData2{linkIndex+1}.vertex.green ...
+                        , plyData2{linkIndex+1}.vertex.blue]/255;
                     h_UR3.link(linkIndex+1).Children.FaceColor = 'interp';
                 catch ME_2
                     disp(ME_2);
                     continue;
                 end
             end
-
-            % colour the environment/floor 
+            
+            % colour the environment/floor
             surf([-2,-2;2,2],[-2,2;-2,2],[0.001,0.001;0.01,0.001],'CData',imread('floor.jpg'),'FaceColor','texturemap');
-        end        
+        end
+        
     end
 end
