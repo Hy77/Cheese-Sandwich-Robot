@@ -26,13 +26,16 @@ q0test = [0,0,0,0,0,0] %testingvairable
 
 %% Collision Variables
 % Object in interest a cube at location with side of disired
-Obj_center_location = [-0.15,0.4,1.05];
+Obj_center_location = [-0.15,0.4,1.05];% Middle of IRB
 
 
 % test other points
-% Obj_center_location = [0.04,0.5,0.705];%---------------------------------------------------
-% Obj_center_location = [-0.18,0.5,0.775];%---------------------------------------------------
-% Obj_center_location = [-0.15,0.15,1.1];%---------------------------------------------------
+% Obj_center_location = [0.04,0.5,0.705];% in Table infront of IRB %---------------------------------------------------
+% Obj_center_location = [-0.18,0.5,0.775];% Base of IRB%---------------------------------------------------
+% Obj_center_location = [-0.15,0.15,1.1];% hovering over Chopping board%---------------------------------------------------
+
+
+% Obj_center_location = [-0.2,-0.5,0.775];% Base of UR3%---------------------------------------------------
 
 
 [Y,Z] = meshgrid(-.1:0.01:.1,-.1:0.01:.1); % it is the 2 sides of the cube 
@@ -64,7 +67,7 @@ axis equal
 % Collision Bubble specs
 IRB_elipse_radius = [0.1,0.1,0.225;  0.1,0.1,0.22;  0.1,0.1,0.1;  0.2,0.1,0.1;   0.1,0.1,0.1;   0.1,0.1,0.1;   0.1,0.1,0.1;]; %the diameter of elipse for each joint
 IRB_elipse_center = [0,0,0;  0,0,0;  0,0,0;  0,0,0;   0,0,0;   0,0,0;  0,0,0;] ;%the center offset of elipse for each joint
-UR3_elipse_radius = [0.2,0.1,0.1;  0.2,0.1,0.1;  0.2,0.1,0.1;  0.2,0.1,0.1;   0.2,0.1,0.1;   0.2,0.1,0.1;   0.2,0.1,0.1;];%the diameter of elipse for each joint
+UR3_elipse_radius = [0.1,0.1,0.225;  0.1,0.1,0.1;  0.1,0.1,0.22;  0.2,0.1,0.1;   0.1,0.1,0.1;   0.1,0.1,0.1;;   0.1,0.1,0.1;;];%the diameter of elipse for each joint
 UR3_elipse_center = [0,0,0;  0,0,0;  0,0,0;  0,0,0;   0,0,0;   0,0,0;  0,0,0;]; %the center offset of elipse for each joint
 
 
@@ -116,21 +119,44 @@ UR3_elipse_center = [0,0,0;  0,0,0;  0,0,0;  0,0,0;   0,0,0;   0,0,0;  0,0,0;]; 
 % UR3Collision.plot(q0test)    
 
 %% Collision Test
-% try delete(cubeAtOigin_h); end; %---------------------------------------------------
-%Test for compact at original cube location
-q0test = [pi/2,pi/1.5,-2.3*pi,0,0,0]%---------------------------------------------------
-% IRBCollision.plot(q0test)%---------------------------------------------------
-% 
-% q0test = CheeseRobots.IRB.ikine(trvec2tform([-0.15,0.15,0.79]))%---------------------------------------------------
-% IRBCollision.plot(q0test) %---------------------------------------------------
-CheeseRobots.IRB.animate(q0test);%---------------------------------------------------
+% % % % % try delete(cubeAtOigin_h); end; %---------------------------------------------------
+% % % % %Test for compact at original cube location
+% % % % q0test = [pi/2,pi/1.5,-2.3*pi,0,0,0]%---------------------------------------------------
+% % % % % IRBCollision.plot(q0test)%---------------------------------------------------
+% % % % % 
+% % % % % q0test = CheeseRobots.IRB.ikine(trvec2tform([-0.15,0.15,0.79]))%---------------------------------------------------
+% % % % % IRBCollision.plot(q0test) %---------------------------------------------------
+% % % % CheeseRobots.IRB.animate(q0test);%---------------------------------------------------
+% % % % 
+% % % % testcollision = CollisionPath (q0test,CheeseRobots.IRB,IRB_elipse_radius, IRB_elipse_center,cubePoints)
 
-testcollision = UR3CollisionPath (q0test,CheeseRobots.IRB,IRB_elipse_radius, IRB_elipse_center,cubePoints)
+ori_q = [0 0 0 0 0 0];
+% set steps = 50 ez for demonstration
+steps = 50;
+% get joint_q by using ikine
+targ_q = CheeseRobots.UR3.ikine(transl([0.185,-0.53,0.99]) * troty(pi) * trotz(pi));
+% create jtraj
+q0matrix = jtraj(ori_q, targ_q, steps);
+
+test22222 = MatrixCollisonDetection(q0matrix,CheeseRobots.UR3,UR3_elipse_radius, UR3_elipse_center,cubePoints)
+% CheeseRobots.UR3.animate(q0matrix(43,:));%---------------------------------------------------
 % testtr999 = IRBCollision.fkine(q0test)%---------------------------------------------------
 % testtr000= CheeseRobots.IRB.fkine(q0test)%---------------------------------------------------
 
 %% Setup Robotic Links
-function booleancollisiondetected = UR3CollisionPath(qCP,robot,robotelipsesradius, robotelipsecenters,objectpoints)%,otherrobot    If get time
+function SafeOrNSafe = MatrixCollisonDetection(qCPMatrix,robot,robotelipsesradius, robotelipsecenters,objectpoints)
+    SafeOrNSafe = 2;
+    for i = 1 : size(qCPMatrix,1)
+%        test = CollisionPath(qCPMatrix(i,:),robot,robotelipsesradius, robotelipsecenters,objectpoints)%---------------------------------------------------
+        if CollisionPath(qCPMatrix(i,:),robot,robotelipsesradius, robotelipsecenters,objectpoints) == 1
+            SafeOrNSafe = 1;
+        elseif SafeOrNSafe ~= 1
+            SafeOrNSafe = 0;
+        end   
+    end
+end
+
+function booleancollisiondetected = CollisionPath(qCP,robot,robotelipsesradius, robotelipsecenters,objectpoints)%,otherrobot    If get time
     booleancollisiondetected = 2; % if returns a 2 at end something went horribly wrong return should be 1 or 0
     tr = zeros(4,4,robot.n+1);
     tr(:,:,1) = robot.base;
