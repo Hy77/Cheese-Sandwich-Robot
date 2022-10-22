@@ -5,7 +5,8 @@ classdef czRobot < handle
         kitchen; kitchen1; fridge; fridge1; bread1; bread1s; bread2; bread2s;
         bread3; bread3s; bread4; bread4s; bread5; bread5s; basket; basket1;
         gp_base; gp_base1; gp_fg1;gp_fg1s; gp_fg2;gp_fg2s; gp_fg3;gp_fg3s;
-        c_block; c_block1; c_blocks; c_block2; c_slice; c_slice1;
+        c_block; c_block1; c_blocks; c_block2; c_slice; c_slice1; aid_kit; 
+        aid_kit1;w_sign;w_sign1;e_but;e_but1;barrier;barrier1;
         
         %> workspace
         workspace = [-2 2 -2 2 0 2];
@@ -58,7 +59,7 @@ classdef czRobot < handle
             L_UR3(3) = Link([0      0       -0.21325       0       0]);
             L_UR3(4) = Link([0      0.11235     0        pi/2      0]);
             L_UR3(5) = Link([0      0.08535     0       -pi/2	   0]);
-            L_UR3(6) = Link([0      0.092      0          0       0]);
+            L_UR3(6) = Link([0      0.092      0          0        0]);
             % Incorporate joint limits
             L_UR3(1).qlim = [-360 360]*pi/180;
             L_UR3(2).qlim = [-360 360]*pi/180;
@@ -212,6 +213,7 @@ classdef czRobot < handle
             updatedPoints = [self.bread1.basePose * [self.bread1.baseVerts,ones(self.bread1.VertexCount,1)]']'; % get the new position
             self.bread1s.Vertices = updatedPoints(:,1:3); % updated the bread1's location
             hold on
+            
             % colour the bread2
             self.bread2.VertexCount = size(vb,1);
             self.bread2.midPoint = sum(vb)/self.bread2.VertexCount; % find the midPoint of the bread2
@@ -306,8 +308,7 @@ classdef czRobot < handle
             updatedPoints = [self.c_slice.basePose * [self.c_slice.baseVerts,ones(self.c_slice.VertexCount,1)]']'; % get the new position
             self.c_slice1.Vertices = updatedPoints(:,1:3); % updated the c_slice's location
             hold on
-            
-            
+
             % colour the kitchen
             [fk,vk,datak] = plyread('kitchen.ply','tri');
             self.kitchen.VertexCount = size(vk,1);
@@ -340,6 +341,66 @@ classdef czRobot < handle
             self.fridge1.Vertices = updatedPoints(:,1:3); % updated the fridge's location
             hold on
             
+            % safety feature - aid_kit
+            [fa,va,dataa] = plyread('aid_kit.ply','tri');
+            self.aid_kit.VertexCount = size(va,1);
+            self.aid_kit.midPoint = sum(va)/self.aid_kit.VertexCount; % find the midPoint of the aid_kit
+            self.aid_kit.baseVerts = va - repmat(self.aid_kit.midPoint,self.aid_kit.VertexCount,1);  % find the vertex of the aid_kit
+            self.aid_kit.basePose = eye(4);
+            self.aid_kit.vertexColours = [dataa.vertex.red, dataa.vertex.green, dataa.vertex.blue] / 255; % set aid_kit's colour
+            self.aid_kit1 = trisurf(fa,va(:,1),va(:,2),va(:,3),'FaceVertexCData', self.aid_kit.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the aid_kit all the faces & colour
+            forwardTR = makehgtform('translate',[-1.7,-0.6,1.12]); % set the origin/start point of the aid_kit
+            rotateTRx = makehgtform('xrotate',(pi/2));
+            rotateTRy = makehgtform('yrotate',(pi));
+            self.aid_kit.basePose = self.aid_kit.basePose * forwardTR  * rotateTRx * rotateTRy; % let the aid_kit move to the specified position
+            updatedPoints = [self.aid_kit.basePose * [self.aid_kit.baseVerts,ones(self.aid_kit.VertexCount,1)]']'; % get the new position
+            self.aid_kit1.Vertices = updatedPoints(:,1:3); % updated the aid_kit's location
+            hold on
+            
+            % safety feature - warnning sign
+            [fsign,vsign,datasign] = plyread('warningSign.ply','tri');
+            self.w_sign.VertexCount = size(vsign,1);
+            self.w_sign.midPoint = sum(vsign)/self.w_sign.VertexCount; % find the midPoint of the w_sign
+            self.w_sign.baseVerts = vsign - repmat(self.w_sign.midPoint,self.w_sign.VertexCount,1);  % find the vertex of the w_sign
+            self.w_sign.basePose = eye(4);
+            self.w_sign.vertexColours = [datasign.vertex.red, datasign.vertex.green, datasign.vertex.blue] / 255; % set w_sign's colour
+            self.w_sign1 = trisurf(fsign,vsign(:,1),vsign(:,2),vsign(:,3),'FaceVertexCData', self.w_sign.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the w_sign all the faces & colour
+            forwardTR = makehgtform('translate',[0.2,0,0.2]); % set the origin/start point of the w_sign
+            rotateTRx = makehgtform('xrotate',(pi/2));
+            rotateTRy = makehgtform('yrotate',(pi/2));
+            self.w_sign.basePose = self.w_sign.basePose * forwardTR  * rotateTRx * rotateTRy; % let the w_sign move to the specified position
+            updatedPoints = [self.w_sign.basePose * [self.w_sign.baseVerts,ones(self.w_sign.VertexCount,1)]']'; % get the new position
+            self.w_sign1.Vertices = updatedPoints(:,1:3); % updated the w_sign's location
+            hold on
+
+            % safety feature - emergency button
+            [fe,ve,datae] = plyread('e_button.ply','tri');
+            self.e_but.VertexCount = size(ve,1);
+            self.e_but.midPoint = sum(ve)/self.e_but.VertexCount; % find the midPoint of the e_but
+            self.e_but.baseVerts = ve - repmat(self.e_but.midPoint,self.e_but.VertexCount,1);  % find the vertex of the e_but
+            self.e_but.basePose = eye(4);
+            self.e_but.vertexColours = [datae.vertex.red, datae.vertex.green, datae.vertex.blue] / 255; % set e_but's colour
+            self.e_but1 = trisurf(fe,ve(:,1),ve(:,2),ve(:,3),'FaceVertexCData', self.e_but.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the e_but all the faces & colour
+            forwardTR = makehgtform('translate',[-0.18,0.93,0.7]); % set the origin/start point of the e_but
+            rotateTRx = makehgtform('xrotate',(-pi/2));
+            self.e_but.basePose = self.e_but.basePose * forwardTR  * rotateTRx; % let the e_but move to the specified position
+            updatedPoints = [self.e_but.basePose * [self.e_but.baseVerts,ones(self.e_but.VertexCount,1)]']'; % get the new position
+            self.e_but1.Vertices = updatedPoints(:,1:3); % updated the e_but's location
+            hold on
+
+            % safety feature - barrier
+            [fbar,vbar,databar] = plyread('barrier.ply','tri');
+            self.barrier.VertexCount = size(vbar,1);
+            self.barrier.midPoint = sum(vbar)/self.barrier.VertexCount; % find the midPoint of the barrier
+            self.barrier.baseVerts = vbar - repmat(self.barrier.midPoint,self.barrier.VertexCount,1);  % find the vertex of the barrier
+            self.barrier.basePose = eye(4);
+            self.barrier.vertexColours = [databar.vertex.red, databar.vertex.green, databar.vertex.blue] / 255; % set barrier's colour
+            self.barrier1 = trisurf(fbar,vbar(:,1),vbar(:,2),vbar(:,3),'FaceVertexCData', self.barrier.vertexColours,'EdgeColor','none','EdgeLighting','none'); % plot the barrier all the faces & colour
+            forwardTR = makehgtform('translate',[0,0,0.8]); % set the origin/start point of the barrier
+            self.barrier.basePose = self.barrier.basePose * forwardTR ; % let the barrier move to the specified position
+            updatedPoints = [self.barrier.basePose * [self.barrier.baseVerts,ones(self.barrier.VertexCount,1)]']'; % get the new position
+            self.barrier1.Vertices = updatedPoints(:,1:3); % updated the barrier's location
+            hold on
             
             % Display IRB robot
             self.IRB.plot3d(zeros(1,self.IRB.n),'noarrow','workspace',self.workspace);
