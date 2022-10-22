@@ -65,7 +65,6 @@ while true
         status = -1;
         return
     end
-    fprintf('v: %.3f %.3f %.3f %.3f %.3f %.3f\n', v);
     
     %compute robot's Jacobian and inverse
     J2 = r.IRB.jacobn(q0);
