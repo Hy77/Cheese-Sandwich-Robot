@@ -42,9 +42,9 @@ classdef IRB < handle
 %             L6.qlim = [-360 360]*pi/180;
             
 			
-            L1.offset = pi/2;
-            L2.offset = pi;
-            L3.offset = pi/2;
+            L2.offset = pi/2;
+            L4.offset = pi;
+            L5.offset = pi/2;
            
             
 			self.model = SerialLink([L1 L2 L3 L4 L5 L6],'name',name);
