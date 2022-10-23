@@ -1,6 +1,6 @@
 # Cheese-Sandwich-Robot
 
-Distributors: Hy77 -> Haiyang Sun 13816727; Oscar -> Oscar Gullickson 13558578; Chadi Habib 10422665;
+Distributors: Hy77 -> Haiyang Sun 13816727; Oscar -> Oscar Gullickson 13558578; ChadiH22 Chadi Habib 10422665;
 ## Description
 HOW TO RUN THE ROBOT
 
