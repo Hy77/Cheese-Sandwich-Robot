@@ -4,9 +4,8 @@ Distributors: Hy77 -> Haiyang Sun 13816727; Oscar -> Oscar Gullickson 13558578; 
 ## Description
 HOW TO RUN THE ROBOT
 
-Open GrabAndPlace.m for run the main demonstration
-Open Visual_Servoing.m for run the visual servoing
-Open 
+Open GrabAndPlace.m for run the main demonstration.
+Open Visual_Servoing.m for run the visual servoing.
 
 
 ROBOTS: 
