@@ -1,4 +1,6 @@
 cheeseRobot = czRobot;
+r1 = UR3;
+r2 = IRB;
 %% setup environment
 % bread
 forwardTR = transl([-0.15,-0.1,0.8]);
@@ -29,10 +31,10 @@ updatedPoints = [cheeseRobot.gp_fg3.basePose * [cheeseRobot.gp_fg3.baseVerts,one
 cheeseRobot.gp_fg3s.Vertices = updatedPoints(:,1:3); % updated the gripper finger 1's location
 % set up UR3
 UR3_q = [1.7295 -1.5509 1.8747 1.2470 -1.5708 0.1587]; % on the cheeseblock
-cheeseRobot.UR3.animate(UR3_q);
+r1.model.animate(UR3_q);
 % set up IRB
-IRB_q = [-1.5708; -0.6728; 0.6720; 0; 0; 0];
-cheeseRobot.IRB.animate(IRB_q');
+IRB_q = [0; -0.6728 ; 0.6720; 0; 1.5708; 0];
+r2.model.animate(IRB_q');
 %% camera & image & points setup
 % Create image target (points in the image plane)
 pStar = [755 245 320 680; 570 570 275 275];
@@ -56,7 +58,7 @@ lambda = 0.03;
 depth = mean (P(1,:));
 %% initialize simulation
 % plot camera and points
-Tc0 = cheeseRobot.IRB.fkine(IRB_q) * troty(pi); % get current location - EE
+Tc0 = r2.model.fkine(IRB_q) * troty(pi); % get current location - EE
 cam.T = Tc0;
 
 % Display points in 3D and the camera
@@ -97,7 +99,7 @@ while true
     end
     
     %compute robot's Jacobian and inverse
-    J2 = cheeseRobot.IRB.jacobn(IRB_q);
+    J2 = r2.model.jacobn(IRB_q);
     Jinv = pinv(J2);
     % get joint velocities
     qp = Jinv*v;
@@ -114,10 +116,10 @@ while true
     
     %Update joints
     q = IRB_q + (1/fps)*qp;
-    cheeseRobot.IRB.animate(q');
+    r2.model.animate(q');
     
     %Get camera location
-    Tc = cheeseRobot.IRB.fkine(q) * troty(pi);
+    Tc = r2.model.fkine(q) * troty(pi);
     cam.T = Tc;
     
     drawnow
