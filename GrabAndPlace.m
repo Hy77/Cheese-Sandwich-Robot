@@ -1244,31 +1244,6 @@ function Light_cb(~,~)
     assignin('base','locker', modified_value);% sending the variable back from callback
 end
 
-% Gripper_Release
-function gp_release(coor)
-% Gripper base
-cheeseRobot.gp_base.basePose = coor;
-updatedPoints = [cheeseRobot.gp_base.basePose * [cheeseRobot.gp_base.baseVerts,ones(cheeseRobot.gp_base.VertexCount,1)]']'; % get the new position
-cheeseRobot.gp_base1.Vertices = updatedPoints(:,1:3); % updated the gripper base's location
-% Gripper finger 1
-rotateTRx = makehgtform('xrotate',(pi/2));
-cheeseRobot.gp_fg1.basePose = coor * rotateTRx;
-updatedPoints = [cheeseRobot.gp_fg1.basePose * [cheeseRobot.gp_fg1.baseVerts,ones(cheeseRobot.gp_fg1.VertexCount,1)]']'; % get the new position
-cheeseRobot.gp_fg1s.Vertices = updatedPoints(:,1:3); % updated the gripper finger 1's location
-% Gripper finger 2
-rotateTRx = makehgtform('xrotate',(pi/2));
-rotateTRy = makehgtform('yrotate',(2*pi/3));
-cheeseRobot.gp_fg2.basePose = coor * rotateTRx * rotateTRy;
-updatedPoints = [cheeseRobot.gp_fg2.basePose * [cheeseRobot.gp_fg2.baseVerts,ones(cheeseRobot.gp_fg2.VertexCount,1)]']'; % get the new position
-cheeseRobot.gp_fg2s.Vertices = updatedPoints(:,1:3); % updated the gripper finger 2's location
-% Gripper finger 3
-rotateTRx = makehgtform('xrotate',(pi/2));
-rotateTRy = makehgtform('yrotate',(-2*pi/3));
-cheeseRobot.gp_fg3.basePose = coor * rotateTRx * rotateTRy;
-updatedPoints = [cheeseRobot.gp_fg3.basePose * [cheeseRobot.gp_fg3.baseVerts,ones(cheeseRobot.gp_fg3.VertexCount,1)]']'; % get the new position
-cheeseRobot.gp_fg3s.Vertices = updatedPoints(:,1:3); % updated the gripper finger 1's location
-end
-
 function SafeOrNSafe = MatrixCollisonDetection(qCPMatrix,robot,robotelipsesradius, robotelipsecenters,objectpoints)
     SafeOrNSafe = 2;
     for i = 1 : size(qCPMatrix,1)
