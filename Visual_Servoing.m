@@ -33,7 +33,7 @@ cheeseRobot.gp_fg3s.Vertices = updatedPoints(:,1:3); % updated the gripper finge
 UR3_q = [1.7295 -1.5509 1.8747 1.2470 -1.5708 0.1587]; % on the cheeseblock
 r1.model.animate(UR3_q);
 % set up IRB
-IRB_q = [0; -0.6728 ; 0.6720; 0; 1.5708; 0];
+IRB_q = [-1.5708; -0.6728; 0.6720; 0; 0; 0];
 r2.model.animate(IRB_q');
 %% camera & image & points setup
 % Create image target (points in the image plane)
