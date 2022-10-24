@@ -120,7 +120,7 @@ function ATeachIRB(robot, varargin)
 				'String', sprintf('%c', XYZtag(1, j))); 
 			
 			% slider itself
-			IKINEreach = [[-2 -2 -2]; [2 2 2]]; %The reach limit for each robot based on its global position 
+			IKINEreach = [[-0.722 -0.042 0.925]; [0.362 1.042 1.47]]; %The reach limit for each robot based on its global position 
             
             %MUST BE ADJUSTED IF THE BASE OF THE ROBOT IS RELOCATED
             %>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
