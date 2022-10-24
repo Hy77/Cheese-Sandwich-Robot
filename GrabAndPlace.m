@@ -14,7 +14,6 @@ handles.fig=figure(EstopFigure);
 handles.pb1= uicontrol('style','pushbutton','position',[100 100 80 40],'callback',@ESTOP_cb,'string','ESTOP');
 handles.pb2= uicontrol('style','pushbutton','position',[200 100 80 40],'callback',@Reset_cb,'string','Reset');
 handles.pb3= uicontrol('style','pushbutton','position',[300 100 80 40],'callback',@Light_cb,'string','Lightcurtain');
-handles.pb4= uicontrol('style','pushbutton','position',[200 200 80 40],'callback',@UR3_teach,'string','UR3 Teach');
 guidata(handles.fig,handles)
 
 
@@ -35,7 +34,7 @@ Obj_center_location = [-0.15,-0.15,.775];% In Chopping boardnear UR3
 % Obj_center_location = [-0.15,0.4,1.05];% Middle of IRB
 % Obj_center_location = [0.185,-0.53,0.99];% Bread Basket
 % Obj_center_location = [-0.2,-0.5,0.775];% Base of UR3
-Obj_center_location = [2,2,2];% In middle of noware
+Obj_center_location = [-1, 1.7, 0.5];% In middle of noware
 
 [Y,Z] = meshgrid(-.1:0.01:.1,-.1:0.01:.1); % it is the 2 sides of the cube 
 X = repmat(.1,size(Y,1),size(Y,2)); % number is for x direction of the cube
@@ -487,7 +486,7 @@ end
 ori_q_IRB = r2.model.getpos();
 ori_q_UR3 = r1.model.getpos();
 
-targ_q_IRB = r2.model.ikcon(transl([-0.0857,0.0484,0.9635]) * trotz(pi/2));
+targ_q_IRB = r2.model.ikine(transl([-0.0857,0.0484,0.9635]) * trotz(pi/2));
 targ_q_UR3 = ori_q_UR3; targ_q_UR3(1) = 1.8552; % -> only joint1 moves 106degs => deg2rad(106)
 
 cut_cheese = jtraj(ori_q_IRB, targ_q_IRB, steps);
@@ -554,7 +553,7 @@ end
 % use q = ans.IRB.getpos() to find current q
 ori_q_IRB = r2.model.getpos();
 
-targ_q_IRB = r2.model.ikcon(transl([-0.0829,0.035,0.9232]) * trotz(pi/2));
+targ_q_IRB = r2.model.ikine(transl([-0.0829,0.035,0.9232]) * trotz(pi/2));
 
 cut_cheese = jtraj(ori_q_IRB, targ_q_IRB, steps);
 % Collision
@@ -619,7 +618,7 @@ ori_q_IRB = r2.model.getpos();
 ori_q_UR3 = r1.model.getpos();
 
 
-targ_q_IRB = r2.model.ikcon(transl([0.115,0.5,1.184]) * trotz(pi/2));
+targ_q_IRB = r2.model.ikine(transl([0.115,0.5,1.184]) * trotz(pi/2));
 targ_q_UR3 = ori_q_UR3; targ_q_UR3(1) = 1.7295; % -> only joint1 moves 106degs => deg2rad(106)
 
 
@@ -1212,7 +1211,6 @@ function Light_cb(~,~)
     modified_value = 1;% setting the variable to send back
     assignin('base','locker', modified_value);% sending the variable back from callback
 end
-
 
 % Gripper_Release
 function gp_release(coor)
